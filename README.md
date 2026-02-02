@@ -1,6 +1,6 @@
 # 🚀 Learn Terraform: Zero to Production
 
-_A Complete 14-Day Hands-on Terraform Course_
+_A Complete 10-Day Hands-on Terraform Course_
 
 This course is designed to take you from **absolute beginner** to **production-ready Terraform engineer**.  
 You will not just learn Terraform commands — you will learn **how Terraform is used in industries**.
