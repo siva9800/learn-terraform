@@ -6,7 +6,7 @@ This course is designed to take you from **absolute beginner** to **production-r
 You will not just learn Terraform commands — you will learn **how Terraform is used in industries**.
 
 The course follows a **clear structure**:
-- 12 days of core Terraform concepts
+- 10 days of core Terraform concepts
 - 1 full project day
 - 1 full interview-preparation day
 
@@ -30,9 +30,6 @@ By the end of this course, you will be able to:
 ---
 
 ## ⏱️ Course Format
-
-- **Duration:** 14 Days  
-- **Class time:** **~1.5 hours per day**
 - **Audience:** Beginners (cloud basics already completed)  
 - **Approach:** Concept → Hands-on → Real-world relevance  
 
