@@ -1,4 +1,4 @@
-# 🚀 Learn Terraform: Zero to Production
+#  Learn Terraform: Zero to Production
 
 _A Complete 10-Day Hands-on Terraform Course_
 
@@ -12,7 +12,7 @@ The course follows a **clear structure**:
 
 ---
 
-## 🎯 Course Objectives
+##  Course Objectives
 
 By the end of this course, you will be able to:
 
@@ -29,17 +29,17 @@ By the end of this course, you will be able to:
 
 ---
 
-## ⏱️ Course Format
+##  Course Format
 - **Audience:** Beginners (cloud basics already completed)  
 - **Approach:** Concept → Hands-on → Real-world relevance  
 
 ---
 
-## 📅 Course Structure (Day-wise)
+## Course Structure (Day-wise)
 
 ---
 
-## 📅 Day 1 – Terraform Foundations & IaC Basics
+##  Day 1 – Terraform Foundations & IaC Basics
 
 ### You Will Learn
 - What is Infrastructure as Code (IaC)
@@ -60,11 +60,11 @@ You understand **why Terraform is needed and how to install it**.
 
 
 
-## 📅 Day 2: The Terraform Core (Syntax, Logic & State)
+##  Day 2: The Terraform Core (Syntax, Logic & State)
 
 **Goal:** Understand how Terraform speaks, how it connects to the cloud, and how it remembers what it built.
 
-### 📚 Learning Objectives:
+###  Learning Objectives:
 
 * **HCL Syntax Foundations:** Understanding Blocks vs. Arguments.
 * **Provider Ecosystem:** How Terraform interacts with Cloud APIs (AWS, Azure, GCP).
@@ -73,11 +73,11 @@ You understand **why Terraform is needed and how to install it**.
 
 ---
 
-## 📅 Day 3: Practical Deployment & Professional Structure
+##  Day 3: Practical Deployment & Professional Structure
 
 **Goal:** Build infrastructure, manage resource relationships, and organize code like a DevOps Pro.
 
-### 📚 Learning Objectives:
+###  Learning Objectives:
 
 * **The "First Build" Demo:** Deploying a live EC2 Instance from scratch.
 * **Internal Inspection:** Using `terraform console` to query live resource data and the State file.
