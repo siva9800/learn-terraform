@@ -91,7 +91,7 @@ You understand **why Terraform is needed and how to install it**.
 
 ---
 
-## 📅 Day 4 – Parameterization & Visibility (Variables + Outputs)
+## Day 4 – Parameterization & Visibility (Variables + Outputs)
 
 Since Variables and Outputs are two sides of the same coin (Inputs vs. Results), combining them makes total sense.
 
@@ -111,7 +111,7 @@ Since Variables and Outputs are two sides of the same coin (Inputs vs. Results),
 
 ---
 
-## 📅 Day 5 – The Heart of Terraform: State Management
+## Day 5 – The Heart of Terraform: State Management
 
 Since you've already covered how resources relate to each other (dependencies), today should be about how Terraform *remembers* those resources.
 
@@ -135,14 +135,14 @@ Here is a **slightly expanded but still high-level glimpse** you can use for **D
 
 ---
 
-# 📅 Day 6 – Advanced Resource Logic (Meta-Arguments & Lifecycles)
+# Day 6 – Advanced Resource Logic (Meta-Arguments & Lifecycles)
 
 Until now, we have been telling Terraform **what** to create.
 Today we learn **how Terraform should behave** when creating, updating, and deleting infrastructure.
 
 On Day 6 we will cover:
 
-### 🔹 **Meta-Arguments – Scaling Infrastructure**
+###  **Meta-Arguments – Scaling Infrastructure**
 
 We will learn how to use:
 
@@ -153,7 +153,7 @@ This helps us eliminate copy-paste and write **dynamic, scalable Terraform code*
 
 ---
 
-### 🔹 **Lifecycle Rules – Making Infrastructure Safe**
+###  **Lifecycle Rules – Making Infrastructure Safe**
 
 We will learn how to control how Terraform treats important resources:
 
@@ -166,7 +166,7 @@ These rules make Terraform **safe for production environments**.
 
 
 
-## 📅 Day 7 – Terraform Modules (Core Concepts)
+## Day 7 – Terraform Modules (Core Concepts)
 
 ### You Will Learn
 - What modules are
@@ -183,7 +183,7 @@ You can **write reusable Terraform code**.
 
 ---
 
-## 📅 Day 8 – Environments, Security & Best Practices
+## Day 8 – Environments, Security & Best Practices
 
 ### You Will Learn
 - Managing multiple environments
@@ -204,7 +204,7 @@ You understand **production-grade Terraform practices**.
 
 ---
 
-## 🧱 Day 9 – Terraform Project (Full Session)
+## Day 9 – Terraform Project (Full Session)
 
 ### Hands-On Project
 - Build a complete Terraform infrastructure
@@ -217,7 +217,7 @@ You have **one complete Terraform project**.
 
 ---
 
-## 🎤 Day 10 – Terraform Interview Questions (Full Session)
+## Day 10 – Terraform Interview Questions (Full Session)
 
 ### Hands-On (Interactive)
 - Answer interview questions live
@@ -230,7 +230,7 @@ You are **interview-ready for Terraform**.
 
 ---
 
-## ⭐ Final Outcome of the Course
+## Final Outcome of the Course
 
 After completing this course, you will be able to:
 
@@ -243,4 +243,4 @@ After completing this course, you will be able to:
 
 ---
 
-🚀 **Welcome to your Terraform journey — from Zero to Production.**
+**Welcome to your Terraform journey — from Zero to Production.**
