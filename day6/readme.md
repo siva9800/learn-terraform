@@ -1,605 +1,262 @@
-# Day 6 – Advanced Resource Logic (Meta-Arguments & Lifecycles)
+# Terraform - Day 6: Meta-Arguments & Lifecycle
 
-## 📌 Overview
+> **Goal:** Learn how to create **many** resources without copy-pasting (`count`, `for_each`), and how to **control** the way Terraform creates, replaces, and protects them with the **`lifecycle`** block.
 
-Until now, Terraform learned **what to create**.
-On Day 6, we learn **how Terraform should behave** while creating, updating, and deleting infrastructure.
-
-This day focuses on writing **scalable**, **safe**, and **production-ready** Terraform code by using:
-
-* **Meta-Arguments** → For scaling resources dynamically
-* **Lifecycle Rules** → For protecting and controlling critical infrastructure
+So far, every resource block has created **one** thing. But real infrastructure has 3 web servers, 5 users, 10 buckets. Copy-pasting blocks is error-prone and ugly. **Meta-arguments** let one block create many resources. And the **lifecycle** block lets you override Terraform's default "destroy and recreate" behavior - including putting a "do not delete" guard on your production database.
 
 ---
 
-#  Meta-Arguments – Scaling Infrastructure
+## Learning Objectives
 
-Meta-arguments are special Terraform keywords that change **resource behavior**, not resource configuration.
+By the end of this day, you will be able to:
 
-They help eliminate copy-paste and allow **dynamic infrastructure creation**.
-
----
-
-## ✅ `count` – Creating Identical Resources
-
-### What is `count`?
-
-`count` creates **multiple identical copies** of a resource from a single block.
-
-Terraform treats them as **indexed resources**.
+- Use **`count`** to create N identical copies of a resource.
+- Use **`for_each`** to create a labelled set of resources from a map or set.
+- Choose correctly between `count` and `for_each`.
+- Use the **`lifecycle`** block: `prevent_destroy`, `create_before_destroy`, `ignore_changes`.
+- Avoid the classic pitfalls of index-based resources.
 
 ---
 
-### Example: Create 3 EC2 Instances
+## Real-World Analogy
+
+Think about making copies of a document.
+
+| Concept | Analogy |
+|---|---|
+| **`count`** | A **photocopier** set to "make 3 copies". You get copy #0, #1, #2 - identical, identified only by position/number. |
+| **`for_each`** | A set of **labelled folders** - "HR", "Finance", "Legal". Each is identified by its **name**, not a number. Remove "Finance" and the others stay exactly where they are. |
+| **`prevent_destroy`** | A **"DO NOT DELETE" sticker** on the production database. Terraform refuses to destroy it, even if you ask. |
+| **`create_before_destroy`** | When replacing a tyre, you **fit the new one before removing the old** - no downtime / no gap. |
+| **`ignore_changes`** | A **"hands off this field" note** - e.g. "don't touch the tags an external tool keeps editing." |
+
+---
+
+## `count` - make N identical copies
+
+Add `count = N` and Terraform creates N instances. Each gets an index via `count.index` (starts at 0).
 
 ```hcl
 resource "aws_instance" "web" {
-  count         = 3
-  ami           = "ami-12345"
-  instance_type = "t3.micro"
+  count         = 3                      # creates 3 servers
+  ami           = "ami-0c55b159cbfafe1f0"
+  instance_type = "t2.micro"
 
   tags = {
-    Name = "web-${count.index}"
+    Name = "web-server-${count.index}"   # web-server-0, web-server-1, web-server-2
   }
 }
 ```
 
----
-
-### What Terraform Creates
-
-```
-aws_instance.web[0]
-aws_instance.web[1]
-aws_instance.web[2]
-```
-
----
-
-### When to Use `count`
-
-Use `count` when:
-
-* Resources are identical
-* Order does not matter
-* You only need quantity
-
-Example use cases:
-
-* Temporary test servers
-* Load test nodes
-* Batch compute workers
-
----
-
-### ⚠ Problem with `count`
-
-If you remove a resource in the middle:
-
-```
-Index shift happens
-Terraform recreates resources
-```
-
-This can cause downtime.
-
----
-
-## ✅ `for_each` – Creating Distinct Resources (Production Preferred)
-
-### What is `for_each`?
-
-`for_each` creates multiple resources using **named keys instead of numbers**.
-
-This makes Terraform safer and more predictable.
-
----
-
-### Example: Create Subnets Using Names
+Reference them as a list: `aws_instance.web[0]`, `aws_instance.web[1]`, etc.
 
 ```hcl
-resource "aws_subnet" "this" {
-  for_each = {
-    public  = "10.0.1.0/24"
-    private = "10.0.2.0/24"
-  }
+output "first_server_ip" {
+  value = aws_instance.web[0].public_ip
+}
 
-  cidr_block = each.value
-
-  tags = {
-    Name = each.key
-  }
+output "all_server_ips" {
+  value = aws_instance.web[*].public_ip   # [*] = "all of them"
 }
 ```
 
----
-
-### What Terraform Creates
-
-```
-aws_subnet.this["public"]
-aws_subnet.this["private"]
-```
-
----
-
-### Why `for_each` is Better Than `count`
-
-| Feature         | count             | for_each            |
-| --------------- | ----------------- | ------------------- |
-| Identity        | Index based       | Name based          |
-| Deletion impact | Can shift indexes | Only removes target |
-| Production safe | ❌ Risky           | ✅ Safe              |
-| Recommended     | No                | Yes                 |
-
----
-
-### When to Use `for_each`
-
-Use `for_each` when:
-
-* Resources have different configs
-* Each resource has a name
-* Production infrastructure is involved
-
-Example use cases:
-
-* Subnets
-* Storage accounts
-* EC2 with different roles
-* IAM users
-* Microservice resources
-
-
-# Terraform `for_each` With Variables – Complete Practical Guide
-
-This section explains how **`for_each` works with input variables**, how to design variables correctly, and how Terraform converts variable data into **multiple real infrastructure resources**.
-
-This is the **production-standard way** to create scalable infrastructure.
-
----
-
-# 🔹 What Problem Are We Solving?
-
-Without variables, `for_each` looks like this:
+**Conditional creation** - a common `count` trick (create 0 or 1):
 
 ```hcl
-for_each = {
-  web = "10.0.1.0/24"
-  db  = "10.0.2.0/24"
+resource "aws_instance" "bastion" {
+  count = var.enable_bastion ? 1 : 0     # only created if the flag is true
+  ami           = "ami-0c55b159cbfafe1f0"
+  instance_type = "t2.micro"
 }
 ```
 
-This is **hardcoded**.
+### The `count` gotcha
 
-In real projects, we want:
-
-* Different values per environment (dev, qa, prod)
-* Configurable infrastructure
-* Reusable Terraform code
-
-So we use:
-
-> **Variables + for_each = Dynamic Infrastructure**
+`count` resources are tracked by **position**. If you have 3 and remove the **middle** one, indexes shift - Terraform sees #1 and #2 as "changed" and may destroy/recreate them. That's why `for_each` is often safer.
 
 ---
 
+## `for_each` - a labelled set
 
-Think of it like this:
-
-```
-terraform.tfvars → Variable Input
-        ↓
-for_each loop
-        ↓
-Terraform creates multiple resources
-```
-
-Each entry in the variable becomes **one real resource**.
-
----
-
-# 🔹 Example 1: Simple for_each With Variable (set(string))
-
-## 🎯 Goal
-
-Create multiple EC2 instances using names from tfvars.
-
----
-
-## Step 1 — Define Variable (variables.tf)
+`for_each` iterates over a **map** or **set**, identifying each resource by a stable **key** instead of a number.
 
 ```hcl
-variable "instance_names" {
-  description = "Names of EC2 instances"
-  type        = set(string)
+resource "aws_iam_user" "team" {
+  for_each = toset(["alice", "bob", "carol"])
+  name     = each.key                  # each.key = "alice", "bob", ...
 }
 ```
 
----
-
-## Step 2 — Provide Values (terraform.tfvars)
-
-```hcl
-instance_names = [
-  "web",
-  "api",
-  "worker"
-]
-```
-
----
-
-## Step 3 — Use for_each (main.tf)
-
-```hcl
-resource "aws_instance" "this" {
-
-  for_each = var.instance_names
-
-  ami           = "ami-0abcd"
-  instance_type = "t3.micro"
-
-  tags = {
-    Name = each.key
-  }
-}
-```
-
----
-
-## 🔍 What Terraform Creates
-
-Terraform expands this internally:
-
-```
-aws_instance.this["web"]
-aws_instance.this["api"]
-aws_instance.this["worker"]
-```
-
----
-
-## 🧠 Understanding each.key and each.value
-
-Because we used a SET:
-
-| Expression | Value |
-| ---------- | ----- |
-| each.key   | web   |
-| each.value | web   |
-
-For sets → key and value are same.
-
-
-# 🔹 Example 2: for_each With map(string) (Key → Value Mapping)
-
----
-
-## 🎯 Goal
-
-Create multiple **S3 buckets** where:
-
-* Bucket name comes from **map key**
-* Environment label comes from **map value**
-
----
-
-## 🧠 Real World Use Case
-
-You want to create:
-
-| Bucket        | Environment |
-| ------------- | ----------- |
-| logs-bucket   | prod        |
-| backup-bucket | prod        |
-| media-bucket  | dev         |
-
-Instead of repeating code — use map(string).
-
----
-
-# ✅ Step 1 — Define Variable (variables.tf)
+With a **map**, you get both `each.key` and `each.value`:
 
 ```hcl
 variable "buckets" {
-  description = "Map of bucket names and environment labels"
-  type        = map(string)
+  type = map(string)
+  default = {
+    logs    = "us-east-1"
+    backups = "us-west-2"
+  }
 }
-```
 
----
-
-# ✅ Step 2 — Provide Values (terraform.tfvars)
-
-```hcl
-buckets = {
-
-  logs-bucket   = "prod"
-  backup-bucket = "prod"
-  media-bucket  = "dev"
-
-}
-```
-
----
-
-# ✅ Step 3 — Use for_each (main.tf)
-
-```hcl
 resource "aws_s3_bucket" "this" {
-
   for_each = var.buckets
+  bucket   = "myapp-${each.key}"       # myapp-logs, myapp-backups
+  region   = each.value                # the value for that key
+}
+```
 
-  bucket = each.key
+Reference them by key: `aws_s3_bucket.this["logs"]`.
+
+### Why `for_each` beats `count` for changing sets
+
+Remove `"bob"` from the set and **only Bob** is destroyed - alice and carol are untouched, because they're keyed by name, not position.
+
+```mermaid
+flowchart TD
+    subgraph Count["count — keyed by POSITION"]
+        C0["web[0] alice"]
+        C1["web[1] bob  removed"]
+        C2["web[2] carol → shifts to [1]  recreated"]
+    end
+    subgraph ForEach["for_each — keyed by NAME"]
+        F0["this[alice]  untouched"]
+        F1["this[bob]  removed cleanly"]
+        F2["this[carol]  untouched"]
+    end
+    style Count fill:#ffebee,stroke:#c62828
+    style ForEach fill:#e8f5e9,stroke:#2e7d32
+```
+
+### `count` vs `for_each` - when to use which
+
+| Use **`count`** when... | Use **`for_each`** when... |
+|---|---|
+| Resources are **identical** | Resources differ by **name/key** |
+| You just need **N copies** | You have a **map/set** of distinct items |
+| Conditional create (`? 1 : 0`) | The set may **change over time** |
+| Order doesn't matter | You want **stable, non-shifting** identities |
+
+> **Rule of thumb:** if you ever might add/remove items from the middle, prefer `for_each`.
+
+---
+
+## The `lifecycle` Block
+
+The `lifecycle` block lives **inside** a resource and changes how Terraform handles create/replace/destroy.
+
+```mermaid
+flowchart LR
+    A["lifecycle {}"] --> B[" prevent_destroy<br/>refuse to delete"]
+    A --> C[" create_before_destroy<br/>build new before killing old"]
+    A --> D[" ignore_changes<br/>don't react to drift on these fields"]
+    style B fill:#ffcdd2,stroke:#c62828
+    style C fill:#c8e6c9,stroke:#2e7d32
+    style D fill:#fff9c4,stroke:#f9a825
+```
+
+### `prevent_destroy` - the "do not delete" sticker
+
+```hcl
+resource "aws_db_instance" "prod" {
+  identifier     = "prod-database"
+  engine         = "postgres"
+  instance_class = "db.t3.medium"
+
+  lifecycle {
+    prevent_destroy = true     # Terraform will ERROR if anything tries to destroy this
+  }
+}
+```
+
+If you (or a colleague) accidentally run `terraform destroy`, Terraform **refuses** and errors out for this resource. A lifesaver for production databases. (To actually delete it, you must remove the rule first - an intentional speed bump.)
+
+### `create_before_destroy` - zero-downtime replacement
+
+By default, when a change forces replacement, Terraform **destroys the old resource first, then creates the new** - leaving a gap of downtime. Flip the order:
+
+```hcl
+resource "aws_instance" "web" {
+  ami           = var.ami_id
+  instance_type = "t2.micro"
+
+  lifecycle {
+    create_before_destroy = true   # new one is ready BEFORE old is removed
+  }
+}
+```
+
+Great for resources behind a load balancer where you can't afford a gap.
+
+### `ignore_changes` - hands off these fields
+
+Sometimes an external process (an autoscaler, a tagging tool) modifies a resource after Terraform creates it. Without this, every `plan` would try to "fix" it back. Tell Terraform to ignore those fields:
+
+```hcl
+resource "aws_instance" "web" {
+  ami           = var.ami_id
+  instance_type = "t2.micro"
 
   tags = {
-    Environment = each.value
-    Name        = each.key
-    ManagedBy   = "Terraform"
-  }
-}
-```
-
----
-
-# 🔍 What Terraform Creates
-
-Terraform expands internally into:
-
-```
-aws_s3_bucket.this["logs-bucket"]
-aws_s3_bucket.this["backup-bucket"]
-aws_s3_bucket.this["media-bucket"]
-```
-
-Each entry in the map becomes **one real AWS bucket**.
-
----
-
-# 🧠 Understanding each.key vs each.value (map(string))
-
-From tfvars:
-
-```hcl
-logs-bucket = "prod"
-```
-
-Terraform sees:
-
-| Expression | Value       |
-| ---------- | ----------- |
-| each.key   | logs-bucket |
-| each.value | prod        |
-
----
-
-# 🔥 Visual Flow (Very Important)
-
-```
-terraform.tfvars
-     ↓
-Map entries
-     ↓
-Terraform loop
-     ↓
-One resource per entry
-```
-
-
----
-
-# 🔹 Example 3: Production Pattern (Different Config Per Resource)
-
-Now let’s build a **real-world setup**.
-
----
-
-## 🎯 Goal
-
-Create multiple EC2 instances with different:
-
-* Instance types
-* Subnets
-* Disk sizes
-* Tags
-
----
-
-# ✅ Step 1 — Define Variable Using map(object)
-
-### variables.tf
-
-```hcl
-variable "ec2_instances" {
-  description = "EC2 configuration map"
-
-  type = map(object({
-    ami           = string
-    instance_type = string
-    subnet_id     = string
-    volume_size   = number
-    tags          = map(string)
-  }))
-}
-```
-
----
-
-# ✅ Step 2 — Provide Values (terraform.tfvars)
-
-```hcl
-ec2_instances = {
-
-  web = {
-    ami           = "ami-0aaa"
-    instance_type = "t3.micro"
-    subnet_id     = "subnet-111"
-    volume_size   = 20
-
-    tags = {
-      Role = "web"
-      Env  = "prod"
-    }
+    Name = "web"
   }
 
-  api = {
-    ami           = "ami-0bbb"
-    instance_type = "t3.medium"
-    subnet_id     = "subnet-222"
-    volume_size   = 50
-
-    tags = {
-      Role = "api"
-      Env  = "prod"
-    }
-  }
-
-  worker = {
-    ami           = "ami-0ccc"
-    instance_type = "t3.large"
-    subnet_id     = "subnet-333"
-    volume_size   = 100
-
-    tags = {
-      Role = "worker"
-      Env  = "prod"
-    }
+  lifecycle {
+    ignore_changes = [
+      tags,            # ignore tag changes made outside Terraform
+      ami,             # don't replace just because a newer AMI exists
+    ]
   }
 }
+
+# Or ignore EVERYTHING after creation:
+# lifecycle { ignore_changes = all }
 ```
 
----
-
-# ✅ Step 3 — Use for_each (main.tf)
-
-```hcl
-resource "aws_instance" "this" {
-
-  for_each = var.ec2_instances
-
-  ami           = each.value.ami
-  instance_type = each.value.instance_type
-  subnet_id     = each.value.subnet_id
-
-  root_block_device {
-    volume_size = each.value.volume_size
-  }
-
-  tags = merge(
-    each.value.tags,
-    {
-      Name = each.key
-    }
-  )
-}
-```
+> There's a deeper companion note on these rules: **[lifecycle_rules.md](./lifecycle_rules.md)**.
 
 ---
 
-# 🔍 What Terraform Creates
+## Common Mistakes
 
-Terraform creates:
-
-```
-aws_instance.this["web"]
-aws_instance.this["api"]
-aws_instance.this["worker"]
-```
-
-Each resource has **its own configuration**.
+1. **Using `count` for a set that changes.** Removing a middle item shifts indexes and recreates unrelated resources. Use `for_each` instead.
+2. **`for_each` over a plain `list`.** `for_each` needs a **map** or a **set** - wrap lists with `toset(...)`, or you'll get a type error.
+3. **Forgetting `prevent_destroy` is a hard wall.** You literally cannot `terraform destroy` it until you remove the rule. That's by design, but it surprises people during teardown.
+4. **Overusing `ignore_changes = all`.** It silences *real* drift too, so Terraform stops managing those attributes. Be specific about which fields to ignore.
+5. **Mixing `count` and `for_each` in the same resource.** You can use only **one** meta-argument per resource block.
 
 ---
 
-# 🧠 Understanding each.key vs each.value
+## Hands-On Lab
 
-### each.key
+**Goal:** Create multiple resources and control their lifecycle.
 
-This is the **map key**:
-
-```
-web
-api
-worker
-```
-
-Used for:
-
-* Resource identity
-* Naming
-* Stable references
+1. Create 3 EC2 instances with `count` and tag each `web-server-${count.index}`. Run `plan`, then change `count` to 2 and observe which one is removed.
+2. Recreate the same idea with `for_each` over `toset(["a", "b", "c"])`. Remove `"b"` and confirm `a` and `c` are **untouched** in the plan.
+3. Add a conditional resource: `count = var.enable_bastion ? 1 : 0`. Toggle the variable and watch it appear/disappear.
+4. Add `prevent_destroy = true` to a "database" resource, then try `terraform destroy` and read the error.
+5. Add `create_before_destroy = true` to an instance, change its `ami`, and note the new order in the plan (create then destroy).
+6. Add `ignore_changes = [tags]`, manually change a tag in the console, and confirm `plan` shows **no change**.
 
 ---
 
-### each.value
+## Quick Self-Check
 
-This is the **full configuration object**:
-
-```hcl
-{
-  ami = "ami-0aaa"
-  instance_type = "t3.micro"
-  subnet_id = "subnet-111"
-  volume_size = 20
-  tags = {...}
-}
-```
-
-Used to configure resource fields.
+1. What is the key difference in how `count` and `for_each` **identify** their resources?
+2. Why can removing a middle item be safer with `for_each` than `count`?
+3. What type must you pass to `for_each` (and what do you do with a list)?
+4. What happens if you run `terraform destroy` on a resource with `prevent_destroy = true`?
+5. Give a real scenario where `ignore_changes` is the right tool.
 
 ---
 
-# 🔹 Referencing for_each Resources
+## Summary
 
-### Example: Get API instance ID
+- **`count`** = N identical copies, indexed by **number** (`count.index`). Great for "give me 3" and conditional `? 1 : 0`.
+- **`for_each`** = a labelled set from a **map/set**, keyed by **name** (`each.key`/`each.value`). Safer when the set changes.
+- **`lifecycle`** controls create/replace/destroy:
+  - **`prevent_destroy`** = "do not delete" guard.
+  - **`create_before_destroy`** = build new before killing old (no downtime).
+  - **`ignore_changes`** = hands off specific fields edited outside Terraform.
+- Use only **one** meta-argument (`count` *or* `for_each`) per resource.
 
-```hcl
-aws_instance.this["api"].id
-```
-
----
-
-### Example: Get all instance IDs
-
-```hcl
-values(aws_instance.this)[*].id
-```
-
----
-
-# 🔹 Why Variables + for_each Is Production Standard
-
-| Feature           | Benefit                         |
-| ----------------- | ------------------------------- |
-| Reusable code     | Same Terraform for all envs     |
-| Config driven     | Change tfvars, not code         |
-| No duplication    | One resource block              |
-| Safe deletion     | Only targeted resources removed |
-| Environment ready | Dev / QA / Prod separation      |
-
-# 🔹 Comparison of All 3 Patterns (Now You Fully Understand for_each)
-
-| Pattern Type | Best For               | each.key      | each.value  |
-| ------------ | ---------------------- | ------------- | ----------- |
-| set(string)  | Simple names           | Name          | Same as key |
-| map(string)  | Labels, tags, mappings | Name          | Value       |
-| map(object)  | Full infra config      | Resource name | Full object |
-
----
-
-# 🧠 Production Tip
-
-Most companies use:
-
-* **map(object)** → compute/network resources
-* **map(string)** → tags, names, simple mappings
-* **set(string)** → small simple lists
-
----
-
-# 🎯 One Line Summary
-
-> Every entry in a for_each variable becomes exactly one real Terraform-managed resource.
-
----
-
+**Next up → [Day 7: Modules](../day7/readme.md)** - package your reusable infrastructure into shareable building blocks.
