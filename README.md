@@ -27,7 +27,7 @@ flowchart LR
 
 | Animation | What it teaches |
 |---|---|
-| [**Terraform Workflow**](animations/terraform-workflow.html) | Step through Write → Init → Plan → Apply → Destroy and watch cloud resources appear |
+| [**Terraform Workflow**](https://siva9800.github.io/devops-animations/terraform/terraform-workflow.html) | Step through Write → Init → Plan → Apply → Destroy and watch cloud resources appear |
 
 ---
 
