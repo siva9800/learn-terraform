@@ -62,15 +62,15 @@ flowchart LR
 
 | Day | Topic | What you'll learn |
 |---|---|---|
-| [Day 1](day1/readme.md) | **IaC & Terraform Basics** | What IaC is, install, first resource, Write→Plan→Apply |
-| [Day 2](day2/readme.md) | **Providers, Resources & State** | Providers, resources, the state file, variables intro |
-| [Day 3](day3/readme.md) | **Deploy & Pro Structure** | Resource references/dependencies, splitting into `provider/main/variables/outputs.tf` |
-| [Day 4](day4/readme.md) | **Variables & Outputs** | Input/output/local variables, types, validation, precedence, `.tfvars` |
-| [Day 5](day5/readme.md) | **State Management** | Remote backends (S3 + DynamoDB lock), state commands |
-| [Day 6](day6/readme.md) | **Meta-Args & Lifecycle** | `count`, `for_each`, [`lifecycle` rules](day6/lifecycle_rules.md) |
-| [Day 7](day7/readme.md) | **Modules** | Reusable infrastructure, root vs child, inputs/outputs |
-| [Day 8](day8/readme.md) | **Environments & Security** | dev/prod patterns, workspaces, secrets, anti-patterns |
-| [Day 9](day9/readme.md) | **Capstone Project** | Build VPC + subnets + EC2 + RDS with modules end-to-end |
+| [Day 1](day1-iac-basics/notes.md) | **IaC & Terraform Basics** | What IaC is, install, first resource, Write→Plan→Apply |
+| [Day 2](day2-providers-state/notes.md) | **Providers, Resources & State** | Providers, resources, the state file, variables intro |
+| [Day 3](day3-deploy-structure/notes.md) | **Deploy & Pro Structure** | Resource references/dependencies, splitting into `provider/main/variables/outputs.tf` |
+| [Day 4](day4-variables-outputs/notes.md) | **Variables & Outputs** | Input/output/local variables, types, validation, precedence, `.tfvars` |
+| [Day 5](day5-state-management/notes.md) | **State Management** | Remote backends (S3 + DynamoDB lock), state commands |
+| [Day 6](day6-meta-lifecycle/notes.md) | **Meta-Args & Lifecycle** | `count`, `for_each`, [`lifecycle` rules](day6-meta-lifecycle/lifecycle_rules.md) |
+| [Day 7](day7-modules/notes.md) | **Modules** | Reusable infrastructure, root vs child, inputs/outputs |
+| [Day 8](day8-environments-security/notes.md) | **Environments & Security** | dev/prod patterns, workspaces, secrets, anti-patterns |
+| [Day 9](day9-capstone-project/notes.md) | **Capstone Project** | Build VPC + subnets + EC2 + RDS with modules end-to-end |
 
 ---
 
@@ -98,5 +98,5 @@ flowchart LR
 
 ---
 
-**Start with** → [Day 1: IaC & Terraform Basics](day1/readme.md)
+**Start with** → [Day 1: IaC & Terraform Basics](day1-iac-basics/notes.md)
 Next module → [**learn-docker**](../learn-docker)
